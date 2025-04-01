@@ -4,6 +4,7 @@ import Header from './Header';
 import Footer from './Footer';
 import { useUserPreferences } from '@/contexts/UserPreferencesContext';
 import OnboardingModal from '../onboarding/OnboardingModal';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface LayoutProps {
   children: ReactNode;
@@ -11,6 +12,7 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   const { preferences } = useUserPreferences();
+  const { user } = useAuth();
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -19,7 +21,7 @@ const Layout = ({ children }: LayoutProps) => {
         {children}
       </main>
       <Footer />
-      {!preferences.onboardingComplete && <OnboardingModal />}
+      {user && !preferences.onboardingComplete && <OnboardingModal />}
     </div>
   );
 };

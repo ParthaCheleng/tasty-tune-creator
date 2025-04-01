@@ -1,15 +1,17 @@
-
 import { useState } from 'react';
 import { ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import RecipeCard from '@/components/recipes/RecipeCard';
 import RecipeFilters, { FilterOptions } from '@/components/recipes/RecipeFilters';
 import { Button } from '@/components/ui/button';
 import { mockRecipes, getRecommendedRecipes, getPopularRecipes, getQuickRecipes } from '@/data/mockRecipes';
 import { useUserPreferences } from '@/contexts/UserPreferencesContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Index = () => {
   const { preferences } = useUserPreferences();
+  const { user } = useAuth();
   const [filters, setFilters] = useState<FilterOptions>({
     searchQuery: '',
     dietaryRestrictions: [],
@@ -22,8 +24,6 @@ const Index = () => {
   const popularRecipes = getPopularRecipes().slice(0, 4);
   const quickRecipes = getQuickRecipes().slice(0, 4);
   
-  // In a real app, this would filter based on the actual filters
-  // For demo purposes, we're just showing all recipes
   const handleFilterChange = (newFilters: FilterOptions) => {
     setFilters(newFilters);
     console.log('Filters applied:', newFilters);
@@ -43,9 +43,17 @@ const Index = () => {
                 Find recipes that match your dietary preferences, available ingredients, and cooking style.
               </p>
               <div className="flex flex-wrap gap-3">
-                <Button size="lg">
-                  {preferences.onboardingComplete ? 'Browse Recipes' : 'Get Started'}
-                </Button>
+                {user ? (
+                  <Button size="lg" asChild>
+                    <Link to="/profile">
+                      {preferences.onboardingComplete ? 'Browse Recipes' : 'Get Started'}
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button size="lg" asChild>
+                    <Link to="/auth">Sign In to Start</Link>
+                  </Button>
+                )}
                 <Button size="lg" variant="outline">
                   How It Works
                 </Button>
