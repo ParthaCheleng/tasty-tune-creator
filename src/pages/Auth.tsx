@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,36 +9,41 @@ import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
+import { useUserPreferences } from '@/contexts/UserPreferencesContext';
 
 const Auth = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  // 🔐 Separate states for Sign In and Sign Up
+  const [signInEmail, setSignInEmail] = useState('');
+  const [signInPassword, setSignInPassword] = useState('');
+  const [signUpEmail, setSignUpEmail] = useState('');
+  const [signUpPassword, setSignUpPassword] = useState('');
+
   const { user, signIn, signUp, isLoading } = useAuth();
+  const { preferences } = useUserPreferences();
   const [missingEnvVars, setMissingEnvVars] = useState(false);
 
   useEffect(() => {
-    // Check if the required environment variables are set
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    
     if (!supabaseUrl || !supabaseAnonKey) {
       setMissingEnvVars(true);
     }
   }, []);
 
-  // Redirect if already logged in
+  // ✅ Redirect user if already signed in
   if (user && !isLoading) {
-    return <Navigate to="/" replace />;
+    const destination = preferences?.onboardingComplete ? '/' : '/preferences';
+    return <Navigate to={destination} replace />;
   }
 
   const handleSignIn = (e: React.FormEvent) => {
     e.preventDefault();
-    signIn(email, password);
+    signIn(signInEmail, signInPassword);
   };
 
   const handleSignUp = (e: React.FormEvent) => {
     e.preventDefault();
-    signUp(email, password);
+    signUp(signUpEmail, signUpPassword);
   };
 
   return (
@@ -50,7 +54,7 @@ const Auth = () => {
             <CardTitle className="text-2xl font-serif">Welcome to TastyTune</CardTitle>
             <CardDescription>Sign in to your account or create a new one</CardDescription>
           </CardHeader>
-          
+
           {missingEnvVars && (
             <div className="px-6 pb-2">
               <Alert variant="destructive">
@@ -62,34 +66,35 @@ const Auth = () => {
               </Alert>
             </div>
           )}
-          
+
           <Tabs defaultValue="signIn">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signIn">Sign In</TabsTrigger>
               <TabsTrigger value="signUp">Sign Up</TabsTrigger>
             </TabsList>
-            
+
+            {/* Sign In Tab */}
             <TabsContent value="signIn">
               <form onSubmit={handleSignIn}>
                 <CardContent className="space-y-4 pt-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input 
-                      id="email" 
-                      type="email" 
+                    <Label htmlFor="signInEmail">Email</Label>
+                    <Input
+                      id="signInEmail"
+                      type="email"
+                      value={signInEmail}
+                      onChange={(e) => setSignInEmail(e.target.value)}
                       placeholder="your@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
-                    <Input 
-                      id="password" 
+                    <Label htmlFor="signInPassword">Password</Label>
+                    <Input
+                      id="signInPassword"
                       type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      value={signInPassword}
+                      onChange={(e) => setSignInPassword(e.target.value)}
                       required
                     />
                   </div>
@@ -101,29 +106,30 @@ const Auth = () => {
                 </CardFooter>
               </form>
             </TabsContent>
-            
+
+            {/* Sign Up Tab */}
             <TabsContent value="signUp">
               <form onSubmit={handleSignUp}>
                 <CardContent className="space-y-4 pt-4">
                   <div className="space-y-2">
-                    <Label htmlFor="newEmail">Email</Label>
-                    <Input 
-                      id="newEmail" 
-                      type="email" 
+                    <Label htmlFor="signUpEmail">Email</Label>
+                    <Input
+                      id="signUpEmail"
+                      type="email"
+                      value={signUpEmail}
+                      onChange={(e) => setSignUpEmail(e.target.value)}
                       placeholder="your@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="newPassword">Password</Label>
-                    <Input 
-                      id="newPassword" 
+                    <Label htmlFor="signUpPassword">Password</Label>
+                    <Input
+                      id="signUpPassword"
                       type="password"
+                      value={signUpPassword}
+                      onChange={(e) => setSignUpPassword(e.target.value)}
                       placeholder="At least 6 characters"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
                       minLength={6}
                       required
                     />

@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 const Index = () => {
   const { preferences } = useUserPreferences();
   const { user } = useAuth();
+
   const [filters, setFilters] = useState<FilterOptions>({
     searchQuery: '',
     dietaryRestrictions: [],
@@ -19,16 +20,36 @@ const Index = () => {
     maxTime: 60,
     mealType: null,
   });
-  
+
   const recommendedRecipes = getRecommendedRecipes();
   const popularRecipes = getPopularRecipes().slice(0, 4);
   const quickRecipes = getQuickRecipes().slice(0, 4);
-  
+
   const handleFilterChange = (newFilters: FilterOptions) => {
     setFilters(newFilters);
     console.log('Filters applied:', newFilters);
   };
-  
+
+  const renderPrimaryCTA = () => {
+    if (!user) {
+      return (
+        <Button size="lg" asChild>
+          <Link to="/auth">Sign In to Start</Link>
+        </Button>
+      );
+    }
+
+    const hasCompletedOnboarding = preferences?.onboardingComplete;
+
+    return (
+      <Button size="lg" asChild>
+        <Link to={hasCompletedOnboarding ? '/profile' : '/preferences'}>
+          {hasCompletedOnboarding ? 'Browse Recipes' : 'Complete Preferences'}
+        </Link>
+      </Button>
+    );
+  };
+
   return (
     <Layout>
       {/* Hero Section */}
@@ -43,26 +64,16 @@ const Index = () => {
                 Find recipes that match your dietary preferences, available ingredients, and cooking style.
               </p>
               <div className="flex flex-wrap gap-3">
-                {user ? (
-                  <Button size="lg" asChild>
-                    <Link to="/profile">
-                      {preferences.onboardingComplete ? 'Browse Recipes' : 'Get Started'}
-                    </Link>
-                  </Button>
-                ) : (
-                  <Button size="lg" asChild>
-                    <Link to="/auth">Sign In to Start</Link>
-                  </Button>
-                )}
+                {renderPrimaryCTA()}
                 <Button size="lg" variant="outline">
                   How It Works
                 </Button>
               </div>
             </div>
             <div className="relative">
-              <img 
-                src="https://images.unsplash.com/photo-1547592180-85f173990554?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" 
-                alt="Delicious meal" 
+              <img
+                src="https://images.unsplash.com/photo-1547592180-85f173990554?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
+                alt="Delicious meal"
                 className="rounded-xl shadow-lg object-cover w-full aspect-[4/3]"
               />
               <div className="absolute -bottom-5 -left-5 bg-white rounded-lg p-3 shadow-lg hidden md:block">
@@ -80,14 +91,14 @@ const Index = () => {
           </div>
         </div>
       </section>
-      
+
       {/* Filters Section */}
       <section className="py-10">
         <div className="container">
           <RecipeFilters onFilterChange={handleFilterChange} />
         </div>
       </section>
-      
+
       {/* Recommended Recipes */}
       <section className="py-12">
         <div className="container">
@@ -97,7 +108,6 @@ const Index = () => {
               View all <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
-          
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {recommendedRecipes.map((recipe) => (
               <RecipeCard key={recipe.id} recipe={recipe} />
@@ -105,7 +115,7 @@ const Index = () => {
           </div>
         </div>
       </section>
-      
+
       {/* Popular Recipes */}
       <section className="py-12 bg-muted/30">
         <div className="container">
@@ -115,7 +125,6 @@ const Index = () => {
               View all <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
-          
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {popularRecipes.map((recipe) => (
               <RecipeCard key={recipe.id} recipe={recipe} size="sm" />
@@ -123,7 +132,7 @@ const Index = () => {
           </div>
         </div>
       </section>
-      
+
       {/* Quick Meals */}
       <section className="py-12">
         <div className="container">
@@ -133,7 +142,6 @@ const Index = () => {
               View all <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
-          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {quickRecipes.slice(0, 2).map((recipe, index) => (
               <RecipeCard key={recipe.id} recipe={recipe} featured={index === 0} />
@@ -141,36 +149,34 @@ const Index = () => {
           </div>
         </div>
       </section>
-      
+
       {/* Features Section */}
       <section className="py-16 bg-gradient-to-br from-[#F2FCE2] to-[#E5DEFF]">
         <div className="container">
           <h2 className="section-header text-center mb-12">How TastyTune Works</h2>
-          
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white p-6 rounded-xl shadow-sm text-center">
-              <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-primary font-bold text-2xl">1</span>
+            {[
+              {
+                title: 'Set Your Preferences',
+                desc: 'Tell us about your dietary needs, favorite cuisines, and available ingredients.',
+              },
+              {
+                title: 'Get Recommendations',
+                desc: 'Our AI analyzes your preferences and suggests recipes that match your needs.',
+              },
+              {
+                title: 'Cook & Rate',
+                desc: 'Try the recipes and rate them to get even better recommendations next time.',
+              },
+            ].map((step, index) => (
+              <div key={index} className="bg-white p-6 rounded-xl shadow-sm text-center">
+                <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-primary font-bold text-2xl">{index + 1}</span>
+                </div>
+                <h3 className="font-medium text-xl mb-2">{step.title}</h3>
+                <p className="text-muted-foreground">{step.desc}</p>
               </div>
-              <h3 className="font-medium text-xl mb-2">Set Your Preferences</h3>
-              <p className="text-muted-foreground">Tell us about your dietary needs, favorite cuisines, and available ingredients.</p>
-            </div>
-            
-            <div className="bg-white p-6 rounded-xl shadow-sm text-center">
-              <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-primary font-bold text-2xl">2</span>
-              </div>
-              <h3 className="font-medium text-xl mb-2">Get Recommendations</h3>
-              <p className="text-muted-foreground">Our AI analyzes your preferences and suggests recipes that match your needs.</p>
-            </div>
-            
-            <div className="bg-white p-6 rounded-xl shadow-sm text-center">
-              <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-primary font-bold text-2xl">3</span>
-              </div>
-              <h3 className="font-medium text-xl mb-2">Cook & Rate</h3>
-              <p className="text-muted-foreground">Try the recipes and rate them to get even better recommendations next time.</p>
-            </div>
+            ))}
           </div>
         </div>
       </section>
