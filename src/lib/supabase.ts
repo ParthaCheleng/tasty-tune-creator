@@ -23,8 +23,12 @@ try {
       auth: {
         getSession: () => Promise.resolve({ data: { session: null }, error: null }),
         onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
-        signInWithPassword: () => Promise.resolve({ error: new Error('Supabase not configured') }),
-        signUp: () => Promise.resolve({ error: new Error('Supabase not configured') }),
+        signInWithPassword: () => Promise.resolve({ 
+          error: new Error('Supabase not configured. Please add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your .env file.') 
+        }),
+        signUp: () => Promise.resolve({ 
+          error: new Error('Supabase not configured. Please add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your .env file.') 
+        }),
         signOut: () => Promise.resolve({ error: null }),
       },
     };
@@ -37,8 +41,12 @@ try {
     auth: {
       getSession: () => Promise.resolve({ data: { session: null }, error: null }),
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
-      signInWithPassword: () => Promise.resolve({ error: new Error('Supabase client initialization failed') }),
-      signUp: () => Promise.resolve({ error: new Error('Supabase client initialization failed') }),
+      signInWithPassword: () => Promise.resolve({ 
+        error: new Error('Supabase client initialization failed. Please check your configuration.') 
+      }),
+      signUp: () => Promise.resolve({ 
+        error: new Error('Supabase client initialization failed. Please check your configuration.') 
+      }),
       signOut: () => Promise.resolve({ error: null }),
     },
   };

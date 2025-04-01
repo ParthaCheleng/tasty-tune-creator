@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -8,11 +8,24 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { user, signIn, signUp, isLoading } = useAuth();
+  const [missingEnvVars, setMissingEnvVars] = useState(false);
+
+  useEffect(() => {
+    // Check if the required environment variables are set
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      setMissingEnvVars(true);
+    }
+  }, []);
 
   // Redirect if already logged in
   if (user && !isLoading) {
@@ -37,6 +50,19 @@ const Auth = () => {
             <CardTitle className="text-2xl font-serif">Welcome to TastyTune</CardTitle>
             <CardDescription>Sign in to your account or create a new one</CardDescription>
           </CardHeader>
+          
+          {missingEnvVars && (
+            <div className="px-6 pb-2">
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Configuration Missing</AlertTitle>
+                <AlertDescription>
+                  Supabase environment variables are missing. Authentication will not work until you add them to your .env file.
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
+          
           <Tabs defaultValue="signIn">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signIn">Sign In</TabsTrigger>
@@ -69,7 +95,7 @@ const Auth = () => {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button type="submit" className="w-full" disabled={isLoading || missingEnvVars}>
                     {isLoading ? 'Signing in...' : 'Sign In'}
                   </Button>
                 </CardFooter>
@@ -104,7 +130,7 @@ const Auth = () => {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button type="submit" className="w-full" disabled={isLoading || missingEnvVars}>
                     {isLoading ? 'Creating account...' : 'Create Account'}
                   </Button>
                 </CardFooter>
