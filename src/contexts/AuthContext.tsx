@@ -26,28 +26,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Check active session
     const getSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        console.error('Error getting session:', error);
-        setIsLoading(false);
-        return;
-      }
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
+          setIsLoading(false);
+          return;
+        }
 
-      setSession(data.session);
-      setUser(data.session?.user || null);
-      setIsLoading(false);
+        setSession(data.session);
+        setUser(data.session?.user || null);
+      } catch (error) {
+        console.error('Failed to get session:', error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     getSession();
 
     // Listen for auth changes
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setUser(session?.user || null);
-      }
-    );
+    let authListener: { subscription: { unsubscribe: () => void } } | null = null;
+    
+    try {
+      // @ts-ignore - Our mock client might not match the exact type
+      const { data: listener } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          setSession(session);
+          setUser(session?.user || null);
+        }
+      );
+      
+      authListener = listener;
+    } catch (error) {
+      console.error('Error setting up auth listener:', error);
+    }
 
     return () => {
       authListener?.subscription.unsubscribe();
@@ -56,6 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
+      // @ts-ignore - Our mock client might not match the exact type
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -80,6 +95,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string) => {
     try {
+      // @ts-ignore - Our mock client might not match the exact type
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -102,7 +118,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
-      await supabase.auth.signOut();
+      // @ts-ignore - Our mock client might not match the exact type
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
       toast({
         title: "Signed out successfully",
       });

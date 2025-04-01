@@ -12,6 +12,7 @@ import NotFound from "./pages/NotFound";
 import { UserPreferencesProvider } from "./contexts/UserPreferencesContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import Auth from "./pages/Auth";
+import { useEffect, useState } from "react";
 
 const queryClient = new QueryClient();
 
@@ -25,41 +26,70 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <BrowserRouter>
-        <AuthProvider>
-          <UserPreferencesProvider>
-            <Toaster />
-            <Sonner />
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/recipe/:id" element={<RecipeDetail />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route 
-                path="/profile" 
-                element={
-                  <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/preferences" 
-                element={
-                  <ProtectedRoute>
-                    <Preferences />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </UserPreferencesProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const [missingEnvVars, setMissingEnvVars] = useState(false);
+
+  useEffect(() => {
+    // Check if the required environment variables are set
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      setMissingEnvVars(true);
+      console.error(
+        "Missing required Supabase environment variables. " +
+        "Please create a .env file in the project root with the following variables:\n\n" +
+        "VITE_SUPABASE_URL=your_supabase_url\n" +
+        "VITE_SUPABASE_ANON_KEY=your_supabase_anon_key\n\n"
+      );
+    }
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <BrowserRouter>
+          {missingEnvVars && (
+            <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 fixed top-0 w-full z-50">
+              <p className="font-bold">Environment Variable Warning</p>
+              <p>
+                Missing Supabase environment variables. Authentication and database features will not work.
+                Please add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your .env file.
+              </p>
+            </div>
+          )}
+          <AuthProvider>
+            <UserPreferencesProvider>
+              <Toaster />
+              <Sonner />
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/recipe/:id" element={<RecipeDetail />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route 
+                  path="/profile" 
+                  element={
+                    <ProtectedRoute>
+                      <Profile />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/preferences" 
+                  element={
+                    <ProtectedRoute>
+                      <Preferences />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </UserPreferencesProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
