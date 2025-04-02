@@ -12,10 +12,10 @@ import { UserPreferencesProvider } from "./contexts/UserPreferencesContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Auth from "./pages/Auth";
 import { useEffect, useState } from "react";
+import PopularRecipesPage from "./pages/PopularRecipesPage"; // ✅ NEW PAGE
 
 const queryClient = new QueryClient();
 
-// ✅ Fixed ProtectedRoute using useAuth hook
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading } = useAuth();
 
@@ -75,6 +75,7 @@ const App = () => {
                 <Route path="/" element={<Index />} />
                 <Route path="/recipe/:id" element={<RecipeDetail />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/recipes" element={<PopularRecipesPage />} /> {/* ✅ NEW ROUTE */}
                 <Route
                   path="/profile"
                   element={

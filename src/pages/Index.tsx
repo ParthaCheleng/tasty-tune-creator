@@ -30,7 +30,6 @@ const Index = () => {
     setLoadingRecipes(true);
     try {
       if (user) {
-        // Logged-in users: fetch from API
         const recommended = await fetchRecipes({
           ingredients: preferences.pantryItems,
           diet: preferences.dietaryRestrictions.includes('None') ? undefined : preferences.dietaryRestrictions[0],
@@ -45,10 +44,9 @@ const Index = () => {
         setRecommendedRecipes(recommended || []);
         setQuickRecipes(quick || []);
       } else {
-        // Guest: use mock data
         const shuffled = [...mockRecipes].sort(() => 0.5 - Math.random());
         setRecommendedRecipes(shuffled.slice(0, 4));
-        setQuickRecipes(shuffled.filter((r) => r.readyInMinutes <= 30).slice(0, 4));
+        setQuickRecipes(shuffled.filter((r) => (r.prepTime + r.cookTime) <= 30).slice(0, 4));
       }
     } catch (error) {
       console.error('❌ Failed to fetch recipes:', error);
@@ -123,7 +121,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Filters (only when logged in) */}
+      {/* Filters */}
       {user && (
         <section className="py-10">
           <div className="container">
@@ -132,13 +130,17 @@ const Index = () => {
         </section>
       )}
 
-      {/* Recommended Recipes */}
+      {/* Recommended / Popular Recipes */}
       <section className="py-12">
         <div className="container">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="section-header">{user ? 'Recommended for You' : 'Explore Popular Dishes'}</h2>
-            <Button variant="ghost" className="flex items-center gap-1">
-              View all <ArrowRight className="h-4 w-4" />
+            <h2 className="section-header">
+              {user ? 'Recommended for You' : 'Explore Popular Dishes'}
+            </h2>
+            <Button variant="ghost" className="flex items-center gap-1" asChild>
+              <Link to="/recipes">
+                View all <ArrowRight className="h-4 w-4" />
+              </Link>
             </Button>
           </div>
           {loadingRecipes ? (
@@ -157,7 +159,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Ready in 30 Minutes */}
+      {/* Quick Meals */}
       <section className="py-12 bg-muted/30">
         <div className="container">
           <div className="flex justify-between items-center mb-6">
@@ -182,7 +184,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Features */}
       <section className="py-16 bg-gradient-to-br from-[#F2FCE2] to-[#E5DEFF]">
         <div className="container">
           <h2 className="section-header text-center mb-12">How TastyTune Works</h2>
