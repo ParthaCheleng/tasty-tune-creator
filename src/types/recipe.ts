@@ -1,4 +1,3 @@
-
 export interface Recipe {
   id: string;
   name: string;
@@ -20,6 +19,9 @@ export interface Recipe {
   createdAt: string;
   rating: number;
   reviews: number;
+
+  // ✅ Added for compatibility with Spoonacular & quick meal filtering
+  readyInMinutes?: number;
 }
 
 export interface Ingredient {

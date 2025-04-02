@@ -1,13 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import RecipeCard from '@/components/recipes/RecipeCard';
 import RecipeFilters, { FilterOptions } from '@/components/recipes/RecipeFilters';
 import { Button } from '@/components/ui/button';
-import { mockRecipes, getRecommendedRecipes, getPopularRecipes, getQuickRecipes } from '@/data/mockRecipes';
 import { useUserPreferences } from '@/contexts/UserPreferencesContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { fetchRecipes } from '@/utils/fetchRecipes';
+import { mockRecipes } from '@/data/mockRecipes';
 
 const Index = () => {
   const { preferences } = useUserPreferences();
@@ -21,13 +22,47 @@ const Index = () => {
     mealType: null,
   });
 
-  const recommendedRecipes = getRecommendedRecipes();
-  const popularRecipes = getPopularRecipes().slice(0, 4);
-  const quickRecipes = getQuickRecipes().slice(0, 4);
+  const [recommendedRecipes, setRecommendedRecipes] = useState<any[]>([]);
+  const [quickRecipes, setQuickRecipes] = useState<any[]>([]);
+  const [loadingRecipes, setLoadingRecipes] = useState(false);
+
+  const loadRecipes = async () => {
+    setLoadingRecipes(true);
+    try {
+      if (user) {
+        // Logged-in users: fetch from API
+        const recommended = await fetchRecipes({
+          ingredients: preferences.pantryItems,
+          diet: preferences.dietaryRestrictions.includes('None') ? undefined : preferences.dietaryRestrictions[0],
+          cuisine: preferences.favoriteCuisines[0],
+          maxReadyTime: preferences.maxPrepTime,
+        });
+
+        const quick = await fetchRecipes({
+          maxReadyTime: 30,
+        });
+
+        setRecommendedRecipes(recommended || []);
+        setQuickRecipes(quick || []);
+      } else {
+        // Guest: use mock data
+        const shuffled = [...mockRecipes].sort(() => 0.5 - Math.random());
+        setRecommendedRecipes(shuffled.slice(0, 4));
+        setQuickRecipes(shuffled.filter((r) => r.readyInMinutes <= 30).slice(0, 4));
+      }
+    } catch (error) {
+      console.error('❌ Failed to fetch recipes:', error);
+    } finally {
+      setLoadingRecipes(false);
+    }
+  };
+
+  useEffect(() => {
+    loadRecipes();
+  }, [user, preferences]);
 
   const handleFilterChange = (newFilters: FilterOptions) => {
     setFilters(newFilters);
-    console.log('Filters applied:', newFilters);
   };
 
   const renderPrimaryCTA = () => {
@@ -39,13 +74,9 @@ const Index = () => {
       );
     }
 
-    const hasCompletedOnboarding = preferences?.onboardingComplete;
-
     return (
       <Button size="lg" asChild>
-        <Link to={hasCompletedOnboarding ? '/profile' : '/preferences'}>
-          {hasCompletedOnboarding ? 'Browse Recipes' : 'Complete Preferences'}
-        </Link>
+        <Link to="/profile">Browse Recipes</Link>
       </Button>
     );
   };
@@ -72,7 +103,7 @@ const Index = () => {
             </div>
             <div className="relative">
               <img
-                src="https://images.unsplash.com/photo-1547592180-85f173990554?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
+                src="https://images.unsplash.com/photo-1547592180-85f173990554?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80"
                 alt="Delicious meal"
                 className="rounded-xl shadow-lg object-cover w-full aspect-[4/3]"
               />
@@ -92,49 +123,42 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Filters Section */}
-      <section className="py-10">
-        <div className="container">
-          <RecipeFilters onFilterChange={handleFilterChange} />
-        </div>
-      </section>
+      {/* Filters (only when logged in) */}
+      {user && (
+        <section className="py-10">
+          <div className="container">
+            <RecipeFilters onFilterChange={handleFilterChange} />
+          </div>
+        </section>
+      )}
 
       {/* Recommended Recipes */}
       <section className="py-12">
         <div className="container">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="section-header">Recommended for You</h2>
+            <h2 className="section-header">{user ? 'Recommended for You' : 'Explore Popular Dishes'}</h2>
             <Button variant="ghost" className="flex items-center gap-1">
               View all <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {recommendedRecipes.map((recipe) => (
-              <RecipeCard key={recipe.id} recipe={recipe} />
-            ))}
-          </div>
+          {loadingRecipes ? (
+            <p>Loading recipes...</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {recommendedRecipes.length > 0 ? (
+                recommendedRecipes.map((recipe: any) => (
+                  <RecipeCard key={recipe.id} recipe={recipe} />
+                ))
+              ) : (
+                <p className="text-muted-foreground">No recipes found.</p>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
-      {/* Popular Recipes */}
+      {/* Ready in 30 Minutes */}
       <section className="py-12 bg-muted/30">
-        <div className="container">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="section-header">Most Popular</h2>
-            <Button variant="ghost" className="flex items-center gap-1">
-              View all <ArrowRight className="h-4 w-4" />
-            </Button>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {popularRecipes.map((recipe) => (
-              <RecipeCard key={recipe.id} recipe={recipe} size="sm" />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Quick Meals */}
-      <section className="py-12">
         <div className="container">
           <div className="flex justify-between items-center mb-6">
             <h2 className="section-header">Ready in 30 Minutes</h2>
@@ -142,11 +166,19 @@ const Index = () => {
               View all <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {quickRecipes.slice(0, 2).map((recipe, index) => (
-              <RecipeCard key={recipe.id} recipe={recipe} featured={index === 0} />
-            ))}
-          </div>
+          {loadingRecipes ? (
+            <p>Loading...</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {quickRecipes.length > 0 ? (
+                quickRecipes.map((recipe: any) => (
+                  <RecipeCard key={recipe.id} recipe={recipe} size="sm" />
+                ))
+              ) : (
+                <p className="text-muted-foreground">No quick recipes found.</p>
+              )}
+            </div>
+          )}
         </div>
       </section>
 

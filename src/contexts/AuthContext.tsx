@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
@@ -19,118 +18,97 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // 🟡 Indicates loading state
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check active session
-    const getSession = async () => {
+    const initializeSession = async () => {
       try {
-        const { data, error } = await supabase.auth.getSession();
-        
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
+
         if (error) {
           console.error('Error getting session:', error);
-          setIsLoading(false);
-          return;
         }
 
-        setSession(data.session);
-        setUser(data.session?.user || null);
+        setSession(session);
+        setUser(session?.user ?? null);
       } catch (error) {
-        console.error('Failed to get session:', error);
+        console.error('Error during session fetch:', error);
       } finally {
-        setIsLoading(false);
+        setIsLoading(false); // ✅ Ensure loading ends after first check
       }
     };
 
-    getSession();
+    initializeSession();
 
-    // Listen for auth changes
-    let authListener: { subscription: { unsubscribe: () => void } } | null = null;
-    
-    try {
-      // @ts-ignore - Our mock client might not match the exact type
-      const { data: listener } = supabase.auth.onAuthStateChange(
-        async (event, session) => {
-          setSession(session);
-          setUser(session?.user || null);
-        }
-      );
-      
-      authListener = listener;
-    } catch (error) {
-      console.error('Error setting up auth listener:', error);
-    }
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+    });
 
     return () => {
-      authListener?.subscription.unsubscribe();
+      listener.subscription.unsubscribe();
     };
   }, []);
 
   const signIn = async (email: string, password: string) => {
     try {
-      // @ts-ignore - Our mock client might not match the exact type
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
 
       if (error) throw error;
-      
+
       toast({
-        title: "Successfully signed in",
-        description: "Welcome back!",
+        title: 'Successfully signed in',
+        description: 'Welcome back!',
       });
-      
+
       navigate('/');
     } catch (error: any) {
       toast({
-        title: "Sign in failed",
-        description: error.message || "Please check your credentials and try again",
-        variant: "destructive",
+        title: 'Sign in failed',
+        description: error.message || 'Please check your credentials and try again',
+        variant: 'destructive',
       });
     }
   };
 
   const signUp = async (email: string, password: string) => {
     try {
-      // @ts-ignore - Our mock client might not match the exact type
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
+      const { error } = await supabase.auth.signUp({ email, password });
 
       if (error) throw error;
-      
+
       toast({
-        title: "Sign up successful",
-        description: "Please check your email for verification link",
+        title: 'Sign up successful',
+        description: 'Please check your email for a verification link.',
       });
     } catch (error: any) {
       toast({
-        title: "Sign up failed",
-        description: error.message || "Please try again with different credentials",
-        variant: "destructive",
+        title: 'Sign up failed',
+        description: error.message || 'Please try again with different credentials.',
+        variant: 'destructive',
       });
     }
   };
 
   const signOut = async () => {
     try {
-      // @ts-ignore - Our mock client might not match the exact type
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      
+
       toast({
-        title: "Signed out successfully",
+        title: 'Signed out successfully',
       });
       navigate('/');
     } catch (error: any) {
       toast({
-        title: "Failed to sign out",
+        title: 'Failed to sign out',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     }
   };
@@ -144,7 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;

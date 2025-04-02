@@ -1,5 +1,12 @@
-
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from 'react';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from './AuthContext';
 
 export type Cuisine = 'Italian' | 'Mexican' | 'Asian' | 'American' | 'Mediterranean' | 'Indian' | 'French' | 'Other';
 export type DietaryRestriction = 'None' | 'Vegetarian' | 'Vegan' | 'Gluten-Free' | 'Dairy-Free' | 'Keto' | 'Paleo';
@@ -21,8 +28,9 @@ export interface UserPreferencesState {
 
 interface UserPreferencesContextType {
   preferences: UserPreferencesState;
-  updatePreferences: (newPrefs: Partial<UserPreferencesState>) => void;
+  updatePreferences: (prefs: Partial<UserPreferencesState>) => void;
   resetPreferences: () => void;
+  isPreferencesLoading: boolean;
 }
 
 const defaultPreferences: UserPreferencesState = {
@@ -41,24 +49,87 @@ const defaultPreferences: UserPreferencesState = {
 const UserPreferencesContext = createContext<UserPreferencesContextType | undefined>(undefined);
 
 export const UserPreferencesProvider = ({ children }: { children: ReactNode }) => {
-  const [preferences, setPreferences] = useState<UserPreferencesState>(() => {
-    const savedPrefs = localStorage.getItem('userPreferences');
-    return savedPrefs ? JSON.parse(savedPrefs) : defaultPreferences;
-  });
+  const [preferences, setPreferences] = useState<UserPreferencesState>(defaultPreferences);
+  const [isPreferencesLoading, setIsPreferencesLoading] = useState(true);
+  const { user, isLoading: isAuthLoading } = useAuth();
 
-  const updatePreferences = (newPrefs: Partial<UserPreferencesState>) => {
-    const updatedPrefs = { ...preferences, ...newPrefs };
-    setPreferences(updatedPrefs);
-    localStorage.setItem('userPreferences', JSON.stringify(updatedPrefs));
+  useEffect(() => {
+    const fetchUserPreferences = async () => {
+      if (!user) {
+        setPreferences(defaultPreferences);
+        setIsPreferencesLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('🔴 Error fetching user preferences:', error.message);
+      }
+
+      if (data) {
+        setPreferences({
+          name: data.name || '',
+          email: user.email || '',
+          favoriteCuisines: data.favorite_cuisines || [],
+          dietaryRestrictions: data.dietary_restrictions || ['None'],
+          mealPreferences: data.meal_preferences || [],
+          cookingSkill: data.cooking_skill || 'Beginner',
+          maxPrepTime: data.max_prep_time || 30,
+          pantryItems: data.pantry_items || [],
+          excludedIngredients: data.excluded_ingredients || [],
+          onboardingComplete: data.onboarding_complete || false,
+        });
+      }
+
+      setIsPreferencesLoading(false);
+    };
+
+    // Wait until auth finishes before fetching preferences
+    if (!isAuthLoading) {
+      fetchUserPreferences();
+    }
+  }, [user, isAuthLoading]);
+
+  const updatePreferences = async (updatedFields: Partial<UserPreferencesState>) => {
+    const updated = { ...preferences, ...updatedFields };
+    setPreferences(updated);
+
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('profiles')
+      .upsert({
+        id: user.id,
+        email: user.email,
+        name: updated.name,
+        favorite_cuisines: updated.favoriteCuisines,
+        dietary_restrictions: updated.dietaryRestrictions,
+        meal_preferences: updated.mealPreferences,
+        cooking_skill: updated.cookingSkill,
+        max_prep_time: updated.maxPrepTime,
+        pantry_items: updated.pantryItems,
+        excluded_ingredients: updated.excludedIngredients,
+        onboarding_complete: updated.onboardingComplete,
+      });
+
+    if (error) {
+      console.error('🔴 Failed to update preferences in Supabase:', error.message);
+    }
   };
 
   const resetPreferences = () => {
     setPreferences(defaultPreferences);
-    localStorage.removeItem('userPreferences');
   };
 
   return (
-    <UserPreferencesContext.Provider value={{ preferences, updatePreferences, resetPreferences }}>
+    <UserPreferencesContext.Provider
+      value={{ preferences, updatePreferences, resetPreferences, isPreferencesLoading }}
+    >
       {children}
     </UserPreferencesContext.Provider>
   );
