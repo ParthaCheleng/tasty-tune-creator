@@ -3,54 +3,54 @@ import Layout from '@/components/layout/Layout';
 import RecipeCard from '@/components/recipes/RecipeCard';
 import { fetchRecipes } from '@/utils/fetchRecipes';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { Recipe } from '@/types/recipe';
 
-const PopularRecipesPage = () => {
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
+const QuickRecipesPage = () => {
+  const [quickRecipes, setQuickRecipes] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
+  const recipesPerPage = 8;
 
-  const loadPopularRecipes = async () => {
+  const loadQuickRecipes = async () => {
     setLoading(true);
     try {
       const data = await fetchRecipes({
-        number: 12,
+        maxReadyTime: 30,
+        number: recipesPerPage,
+        offset: (page - 1) * recipesPerPage,
         sort: 'popularity',
-        offset: (page - 1) * 12,
       });
-      setRecipes(data || []);
+
+      setQuickRecipes(data || []);
     } catch (error) {
-      console.error('❌ Failed to fetch popular recipes:', error);
+      console.error('❌ Failed to fetch quick recipes:', error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadPopularRecipes();
+    loadQuickRecipes();
   }, [page]);
 
   return (
     <Layout>
       <section className="py-12">
         <div className="container">
-          <h1 className="section-header mb-6">Popular Recipes</h1>
+          <h1 className="section-header mb-6">Quick Recipes (≤ 30 Minutes)</h1>
 
           {loading ? (
             <p>Loading recipes...</p>
+          ) : quickRecipes.length === 0 ? (
+            <p>No quick recipes found.</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {recipes.length > 0 ? (
-                recipes.map((recipe) => (
-                  <RecipeCard key={recipe.id} recipe={recipe} />
-                ))
-              ) : (
-                <p className="text-muted-foreground">No recipes found.</p>
-              )}
+              {quickRecipes.map((recipe) => (
+                <RecipeCard key={recipe.id} recipe={recipe} />
+              ))}
             </div>
           )}
 
-          {/* Pagination Controls */}
+          {/* Pagination */}
           <div className="flex justify-center items-center gap-4 mt-10">
             <button
               onClick={() => setPage((prev) => Math.max(1, prev - 1))}
@@ -73,4 +73,4 @@ const PopularRecipesPage = () => {
   );
 };
 
-export default PopularRecipesPage;
+export default QuickRecipesPage;

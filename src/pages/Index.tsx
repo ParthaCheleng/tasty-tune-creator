@@ -164,8 +164,10 @@ const Index = () => {
         <div className="container">
           <div className="flex justify-between items-center mb-6">
             <h2 className="section-header">Ready in 30 Minutes</h2>
-            <Button variant="ghost" className="flex items-center gap-1">
-              View all <ArrowRight className="h-4 w-4" />
+            <Button variant="ghost" className="flex items-center gap-1" asChild>
+              <Link to="/quick">
+                View all <ArrowRight className="h-4 w-4" />
+              </Link>
             </Button>
           </div>
           {loadingRecipes ? (

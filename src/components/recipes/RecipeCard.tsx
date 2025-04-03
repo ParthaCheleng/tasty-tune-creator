@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Heart } from 'lucide-react';
+import { Heart, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Recipe } from '@/types/recipe';
 import { Button } from '@/components/ui/button';
@@ -28,6 +28,8 @@ const RecipeCard = ({ recipe, size = 'md', featured = false }: RecipeCardProps) 
     });
   };
 
+  const totalTime = recipe.prepTime + recipe.cookTime;
+
   return (
     <Link
       to={`/recipe/${recipe.id}`}
@@ -48,6 +50,15 @@ const RecipeCard = ({ recipe, size = 'md', featured = false }: RecipeCardProps) 
           alt={recipe.name}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
+
+        {/* Total Cooking Time Badge */}
+        <div
+          className="absolute top-2 left-2 bg-primary/90 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 shadow"
+          title={`Prep: ${recipe.prepTime} mins | Cook: ${recipe.cookTime} mins`}
+        >
+          <Clock className="h-3 w-3" />
+          {totalTime} mins
+        </div>
 
         {/* Gradient overlay */}
         <div className="gradient-overlay"></div>

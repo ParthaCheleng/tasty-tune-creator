@@ -1,6 +1,6 @@
 import { Recipe } from '@/types/recipe';
 
-// Mock recipe data
+// Mock recipe data for fallback display
 export const mockRecipes: Recipe[] = [
   {
     id: '1',
@@ -19,8 +19,8 @@ export const mockRecipes: Recipe[] = [
     protein: 12,
     carbs: 65,
     fat: 18,
-    ingredients: [ /* ... */ ],
-    instructions: [ /* ... */ ],
+    ingredients: [],
+    instructions: [],
     createdAt: '2023-09-15',
     rating: 4.8,
     reviews: 245,
@@ -42,8 +42,8 @@ export const mockRecipes: Recipe[] = [
     protein: 15,
     carbs: 42,
     fat: 22,
-    ingredients: [ /* ... */ ],
-    instructions: [ /* ... */ ],
+    ingredients: [],
+    instructions: [],
     createdAt: '2023-10-02',
     rating: 4.5,
     reviews: 112,
@@ -65,8 +65,8 @@ export const mockRecipes: Recipe[] = [
     protein: 29,
     carbs: 12,
     fat: 16,
-    ingredients: [ /* ... */ ],
-    instructions: [ /* ... */ ],
+    ingredients: [],
+    instructions: [],
     createdAt: '2023-08-27',
     rating: 4.7,
     reviews: 189,
@@ -88,8 +88,8 @@ export const mockRecipes: Recipe[] = [
     protein: 9,
     carbs: 52,
     fat: 8,
-    ingredients: [ /* ... */ ],
-    instructions: [ /* ... */ ],
+    ingredients: [],
+    instructions: [],
     createdAt: '2023-09-05',
     rating: 4.3,
     reviews: 78,
@@ -111,8 +111,8 @@ export const mockRecipes: Recipe[] = [
     protein: 12,
     carbs: 45,
     fat: 10,
-    ingredients: [ /* ... */ ],
-    instructions: [ /* ... */ ],
+    ingredients: [],
+    instructions: [],
     createdAt: '2023-10-10',
     rating: 4.6,
     reviews: 156,
@@ -134,14 +134,15 @@ export const mockRecipes: Recipe[] = [
     protein: 7,
     carbs: 32,
     fat: 10,
-    ingredients: [ /* ... */ ],
-    instructions: [ /* ... */ ],
+    ingredients: [],
+    instructions: [],
     createdAt: '2023-07-12',
     rating: 4.4,
     reviews: 92,
   },
 ];
 
+// Deprecated: No longer used after Spoonacular integration
 export const getRecipeById = (id: string): Recipe | undefined => {
   return mockRecipes.find(recipe => recipe.id === id);
 };

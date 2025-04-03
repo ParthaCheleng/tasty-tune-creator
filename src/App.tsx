@@ -1,18 +1,21 @@
+import { useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
 import Index from "./pages/Index";
 import RecipeDetail from "./pages/RecipeDetail";
 import Profile from "./pages/Profile";
 import Preferences from "./pages/Preferences";
 import NotFound from "./pages/NotFound";
-import { UserPreferencesProvider } from "./contexts/UserPreferencesContext";
-import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Auth from "./pages/Auth";
-import { useEffect, useState } from "react";
-import PopularRecipesPage from "./pages/PopularRecipesPage"; // ✅ NEW PAGE
+import PopularRecipesPage from "./pages/PopularRecipesPage"; // ✅ Popular Recipes Page
+import QuickRecipesPage from "./pages/QuickRecipePages";     // ✅ Quick Recipes Page
+
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { UserPreferencesProvider } from "./contexts/UserPreferencesContext";
 
 const queryClient = new QueryClient();
 
@@ -75,7 +78,8 @@ const App = () => {
                 <Route path="/" element={<Index />} />
                 <Route path="/recipe/:id" element={<RecipeDetail />} />
                 <Route path="/auth" element={<Auth />} />
-                <Route path="/recipes" element={<PopularRecipesPage />} /> {/* ✅ NEW ROUTE */}
+                <Route path="/recipes" element={<PopularRecipesPage />} />  {/* ✅ Popular Recipes Page */}
+                <Route path="/quick" element={<QuickRecipesPage />} />       {/* ✅ Quick Recipes Page */}
                 <Route
                   path="/profile"
                   element={
